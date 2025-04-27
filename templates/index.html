@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>客户流失预测系统</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #333; }
+        form { margin-bottom: 40px; }
+        label { display: block; margin-top: 10px; }
+        input[type="text"], input[type="number"] { width: 300px; padding: 5px; }
+        textarea { width: 600px; height: 200px; padding: 10px; }
+        button { margin-top: 15px; padding: 10px 20px; }
+        .result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+    <h1>客户流失预测系统</h1>
+
+    <!-- 单条预测 -->
+    <h2>单条客户预测</h2>
+    <form id="singleForm">
+        <label>客户ID：<input type="text" name="customer_id" required></label>
+        <label>预期收入（万元）：<input type="number" name="expected_income" step="0.01" required></label>
+        {% for feature in features %}
+            <label>{{ feature }}：<input type="number" name="{{ feature }}" step="0.01" required></label>
+        {% endfor %}
+        <button type="submit">提交预测</button>
+    </form>
+
+    <div id="singleResult" class="result"></div>
+
+    <hr>
+
+    <!-- 批量预测 -->
+    <h2>批量客户预测（输入JSON数组）</h2>
+    <form id="batchForm">
+        <textarea name="batch_customers" placeholder='[{"customer_id": "1", "expected_income": 5, "device_usage_days": 300, ...}, {...}]'></textarea>
+        <br>
+        <button type="submit">提交批量预测</button>
+    </form>
+
+    <div id="batchResult" class="result"></div>
+
+    <script>
+        document.getElementById('singleForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => { data[key] = parseFloat(value) || value; });
+
+            const response = await fetch('/predict_churn/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            document.getElementById('singleResult').innerHTML = JSON.stringify(result.data, null, 2);
+        };
+
+        document.getElementById('batchForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const text = this.batch_customers.value;
+            try {
+                const customers = JSON.parse(text);
+                const response = await fetch('/predict_churn_batch/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customers })
+                });
+
+                const result = await response.json();
+                document.getElementById('batchResult').innerHTML = JSON.stringify(result.data, null, 2);
+            } catch (error) {
+                alert('请输入正确的JSON格式');
+            }
+        };
+    </script>
+
+</body>
+</html>
