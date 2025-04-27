@@ -1,9 +1,5 @@
-Flask
-uvicorn[standard]
-joblib
-numpy
+flask
 pandas
+numpy
 scikit-learn
-python-multipart
 gunicorn
-
