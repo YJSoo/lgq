@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,render_template
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -59,7 +59,9 @@ def train_model():
 def before_first_request_func():
     train_model()
 
-
+@app.route('/')
+def index():
+    return render_template('index.html',features=features)
 # 单条预测接口
 @app.route('/predict_churn/', methods=['POST'])
 def predict_churn():
