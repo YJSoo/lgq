@@ -40,7 +40,7 @@ def train_model():
     )
 
     rf_model = RandomForestClassifier(
-        n_estimators=100,
+        n_estimators=50,
         max_depth=5,
         random_state=42,
         class_weight='balanced'
