@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
-
+import os
 app = Flask(__name__)
 
 # 定义重要特征
@@ -135,6 +135,6 @@ def predict_churn_batch():
 
     return jsonify({"code": 200, "message": "success", "data": results})
 
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
