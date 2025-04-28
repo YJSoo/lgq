@@ -98,24 +98,40 @@ def predict_churn():
     })
 
 
-# 批量预测接口
+
 @app.route('/predict_churn_batch/', methods=['POST'])
 def predict_churn_batch():
     global rf_model
     if rf_model is None:
         return jsonify({"code": 500, "message": "模型未加载，请稍后再试"}), 500
 
-    data = request.get_json()
-    customers = data.get('customers', [])
+    # 获取原始请求体
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        return jsonify({"code": 400, "message": "请求体为空或格式错误"}), 400
 
+    # 提取 rawQuery 字段内容
+    raw_query = data.get("rawQuery", "")
+
+    # 用正则提取以 "customers" 开头的合法 JSON 块
+    json_match = re.search(r"\{[\s]*\"customers\"[\s]*:[\s]*\[.*?\][\s]*\}", raw_query, re.DOTALL)
+    if not json_match:
+        return jsonify({"code": 400, "message": "未找到合法的 customers JSON 数据"}), 400
+
+    try:
+        json_str = json_match.group(0)
+        parsed_data = json.loads(json_str)
+    except Exception as e:
+        return jsonify({"code": 400, "message": f"解析 JSON 出错: {str(e)}"}), 400
+
+    customers = parsed_data.get("customers", [])
     if not customers:
-        return jsonify({"code": 400, "message": "请求数据缺少 customers 列表"}), 400
+        return jsonify({"code": 400, "message": "customers 列表为空"}), 400
 
     results = []
-
     for customer in customers:
         if not all(field in customer for field in features + ['customer_id', 'expected_income']):
-            continue  # 跳过字段不全的客户
+            continue  # 字段不全的跳过
 
         input_features = pd.DataFrame([{k: customer[k] for k in features}])
 
