@@ -19,20 +19,58 @@
 
     <h1>客户流失预测系统</h1>
 
-    <!-- 单条预测 -->
-    <h2>单条客户预测</h2>
-    <form id="singleForm">
-        <label>客户ID：<input type="text" name="customer_id" required></label>
-        <label>预期收入（万元）：<input type="number" name="expected_income" step="0.01" required></label>
-        {% for feature in features %}
-            <label>{{ feature }}：<input type="number" name="{{ feature }}" step="0.01" required></label>
-        {% endfor %}
-        <button type="submit">提交预测</button>
-    </form>
+   <h2>单条客户预测</h2>
 
-    <div id="singleResult" class="result"></div>
+<form id="singleJsonForm">
+    <textarea id="jsonInput" rows="15" cols="80" placeholder="在这里粘贴你的 JSON 请求体..." required></textarea>
+    <br><br>
+    <button type="submit">提交预测</button>
+</form>
 
-    <hr>
+<script>
+document.getElementById('singleJsonForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // 阻止表单默认提交
+
+    let jsonText = document.getElementById('jsonInput').value.trim();
+
+    if (!jsonText) {
+        alert('请输入JSON数据！');
+        return;
+    }
+
+    let jsonData;
+    try {
+        jsonData = JSON.parse(jsonText);
+    } catch (error) {
+        alert('JSON格式有问题，请检查！');
+        return;
+    }
+
+    fetch('/predict_churn/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(jsonData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 200) {
+            alert('预测成功：\n流失=' + data.data['预测流失'] + 
+                  '\n流失概率=' + data.data['流失概率'] + 
+                  '\n风险评分=' + data.data['风险评分'] + 
+                  '\n客户类型=' + data.data['客户类型']);
+        } else {
+            alert('预测失败：' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('请求错误:', error);
+        alert('请求失败');
+    });
+});
+</script>
+
 
     <!-- 批量预测 -->
     <h2>批量客户预测（输入JSON数组）</h2>
