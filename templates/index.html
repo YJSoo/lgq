@@ -73,50 +73,39 @@ document.getElementById('singleJsonForm').addEventListener('submit', function(e)
 
 
     <!-- 批量预测 -->
-    <h2>批量客户预测（输入JSON数组）</h2>
-    <form id="batchForm">
-        <textarea name="batch_customers" placeholder='[{"customer_id": "1", "expected_income": 5, "device_usage_days": 300, ...}, {...}]'></textarea>
-        <br>
-        <button type="submit">提交批量预测</button>
-    </form>
+    <!-- 批量预测 -->
+<h2>批量客户预测（输入JSON数组）</h2>
+<form id="batchForm">
+    <textarea name="batch_customers" placeholder='[{"customer_id": "1", "expected_income": 5, "device_usage_days": 300, ...}, {...}]'></textarea>
+    <br>
+    <button type="submit">提交批量预测</button>
+</form>
 
-    <div id="batchResult" class="result"></div>
+<div id="batchResult" class="result"></div>
 
-    <script>
-        document.getElementById('singleForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const data = {};
-            formData.forEach((value, key) => { data[key] = parseFloat(value) || value; });
+<script>
+    document.getElementById('batchForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const text = this.batch_customers.value;
+        try {
+            const customers = JSON.parse(text);
 
-            const response = await fetch('/predict_churn/', {
+            // 构建 rawQuery 字段
+            const rawQuery = `这里可以有一些无关的文字，帮我预测一下，下面是数据：{"customers":${JSON.stringify(customers)}}`;
+
+            const response = await fetch('/predict_churn_batch/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ rawQuery })
             });
 
             const result = await response.json();
-            document.getElementById('singleResult').innerHTML = JSON.stringify(result.data, null, 2);
-        };
-
-        document.getElementById('batchForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const text = this.batch_customers.value;
-            try {
-                const customers = JSON.parse(text);
-                const response = await fetch('/predict_churn_batch/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customers })
-                });
-
-                const result = await response.json();
-                document.getElementById('batchResult').innerHTML = JSON.stringify(result.data, null, 2);
-            } catch (error) {
-                alert('请输入正确的JSON格式');
-            }
-        };
-    </script>
+            document.getElementById('batchResult').innerHTML = JSON.stringify(result.data, null, 2);
+        } catch (error) {
+            alert('请输入正确的JSON格式');
+        }
+    };
+</script>
 
 </body>
 </html>
